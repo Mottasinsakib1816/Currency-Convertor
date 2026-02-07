@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AssetX Pro - Ultimate Mobile Trader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --accent: #f8e45c;
+            --glass: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.12);
+            --bg-dark: #021a1a;
+            --success: #00ff88;
+            --danger: #ff4d4d;
+            --text: #fff;
+        }
+
+        .light-theme {
+            --bg-dark: #f0f4f4;
+            --text: #021a1a;
+            --glass: rgba(0, 0, 0, 0.05);
+            --border: rgba(0, 0, 0, 0.1);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; transition: background 0.3s, color 0.3s; }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: var(--bg-dark);
+            font-family: 'Poppins', sans-serif; color: var(--text); overflow: hidden;
+        }
+
+        #ghost-calc {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #111; z-index: 3000; padding: 20px; flex-direction: column;
+        }
+        .calc-display { background: #222; padding: 30px; border-radius: 15px; text-align: right; font-size: 40px; color: #fff; margin-bottom: 20px; height: 120px; }
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .calc-btn { background: #333; color: #fff; padding: 20px; border-radius: 12px; text-align: center; font-size: 20px; cursor: pointer; }
+        .calc-btn.orange { background: #ff9500; }
+
+        #auth-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at top right, #0a3d3d, #021a1a);
+            z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .auth-card { 
+            background: rgba(255,255,255,0.08); padding: 30px; border-radius: 30px; 
+            backdrop-filter: blur(20px); border: 1px solid var(--border);
+            text-align: center; width: 85%; max-width: 380px;
+        }
+        .auth-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .tab-btn { flex: 1; padding: 10px; background: none; border: none; color: #fff; cursor: pointer; opacity: 0.5; font-weight: 600; }
+        .tab-btn.active { opacity: 1; border-bottom: 2px solid var(--accent); color: var(--accent); }
+        .auth-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 12px; border-radius: 12px; color: #fff; margin-bottom: 15px; outline: none; }
+
+        .price-ticker { background: rgba(0,0,0,0.4); padding: 5px 0; font-size: 10px; white-space: nowrap; overflow: hidden; border-bottom: 1px solid var(--border); }
+        .ticker-wrap { display: inline-block; animation: ticker 25s linear infinite; color: #fff; }
+        @keyframes ticker { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+        .app-shell {
+            width: 100%; max-width: 450px; height: 100vh;
+            background: radial-gradient(circle at top right, var(--bg-dark), var(--bg-dark));
+            position: relative; display: none; flex-direction: column; margin: 0 auto;
+        }
+
+        .top-status { padding: 45px 25px 10px; display: flex; justify-content: space-between; font-size: 13px; opacity: 0.8; }
+        .theme-toggle { cursor: pointer; font-size: 18px; color: var(--accent); }
+        .display-section { text-align: center; padding: 20px; }
+        #res-val { font-size: 40px; font-weight: 600; margin: 0; color: var(--text); }
+        #res-label { font-size: 11px; color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase; }
+
+        .refresh-btn { 
+            background: var(--glass); border: 1px solid var(--border); color: var(--text); 
+            padding: 8px 15px; border-radius: 20px; font-size: 12px; cursor: pointer; 
+            margin-top: 10px; display: inline-flex; align-items: center; gap: 8px;
+        }
+
+        .trade-actions { display: flex; gap: 12px; padding: 15px 20px; }
+        .trade-btn { flex: 1; padding: 14px; border-radius: 18px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; transition: 0.3s; }
+        .btn-buy { background: var(--success); color: #012b1a; }
+        .btn-sell { background: var(--danger); color: #fff; }
+        .trade-btn:active { transform: scale(0.95); }
+
+        .content { padding: 0 20px; flex: 1; overflow-y: auto; padding-bottom: 100px; }
+        .glass-card { background: var(--glass); border: 1px solid var(--border); border-radius: 25px; padding: 20px; margin-bottom: 15px; backdrop-filter: blur(15px); }
+        
+        .currency-list { margin-top: 5px; }
+        .currency-item { display: flex; align-items: center; justify-content: space-between; padding: 15px; background: var(--glass); border-radius: 20px; margin-bottom: 10px; border: 1px solid var(--border); }
+        .curr-info { display: flex; align-items: center; gap: 12px; }
+        .curr-flag { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #fff; color: #000; font-weight: bold; font-size: 10px; overflow: hidden; }
+        .curr-flag img { width: 100%; height: 100%; object-fit: cover; }
+        .curr-name-grp { display: flex; flex-direction: column; }
+        .curr-code { font-weight: 600; font-size: 14px; }
+        .curr-full-name { font-size: 10px; opacity: 0.6; }
+        .curr-price-grp { text-align: right; }
+        .curr-val { font-weight: 600; font-size: 14px; }
+        .curr-sub { font-size: 9px; color: var(--success); }
+
+        label { display: block; font-size: 10px; color: var(--accent); margin-bottom: 5px; font-weight: 600; }
+        input, select { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text); font-size: 15px; padding: 8px 0; outline: none; margin-bottom: 15px; }
+        select option { background: var(--bg-dark); color: var(--text); }
+
+        .nav-bar { position: absolute; bottom: 0; width: 100%; height: 120px; background: rgba(0,0,0,0.9); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border); }
+        .nav-item { color: rgba(255,255,255,0.4); text-align: center; cursor: pointer; flex: 1; transition: 0.3s; }
+        .nav-item.active { color: var(--accent); }
+        .nav-item i { font-size: 25px; }
+        .nav-item span { display: block; font-size: 22px; margin-top: 5px; font-weight: 600; }
+        
+        .tab { display: none; }
+        .tab.active { display: block; }
+
+        .profile-container { text-align: center; }
+        .avatar-wrapper { position: relative; width: 110px; height: 110px; margin: 0 auto 15px; }
+        #profile-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); }
+        .cam-icon { position: absolute; bottom: 5px; right: 5px; background: var(--accent); color: #000; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid var(--bg-dark); }
+        .data-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .logout-btn { background: rgba(255, 77, 77, 0.15); color: var(--danger); border: 1px solid var(--danger); width: 100%; padding: 12px; border-radius: 15px; margin-top: 20px; cursor: pointer; font-weight: 600; }
+    </style>
+</head>
+<body onclick="checkGhost(event)">
+
+<div id="ghost-calc">
+    <div class="calc-display" id="calc-res">0</div>
+    <div class="calc-grid">
+        <div class="calc-btn" onclick="ghostTrigger(event)">C</div>
+        <div class="calc-btn">+/-</div>
+        <div class="calc-btn">%</div>
+        <div class="calc-btn orange">÷</div>
+        <div class="calc-btn">7</div>
+        <div class="calc-btn">8</div>
+        <div class="calc-btn">9</div>
+        <div class="calc-btn orange">×</div>
+        <div class="calc-btn">4</div>
+        <div class="calc-btn">5</div>
+        <div class="calc-btn">6</div>
+        <div class="calc-btn orange">-</div>
+        <div class="calc-btn">1</div>
+        <div class="calc-btn">2</div>
+        <div class="calc-btn">3</div>
+        <div class="calc-btn orange">+</div>
+        <div class="calc-btn" style="grid-column: span 2;">0</div>
+        <div class="calc-btn">.</div>
+        <div class="calc-btn orange">=</div>
+    </div>
+</div>
+
+<div id="auth-screen">
+    <div class="auth-card">
+        <div class="auth-tabs">
+            <button class="tab-btn active">লগইন</button>
+            <button class="tab-btn">সাইনআপ</button>
+        </div>
+        <div id="auth-form">
+            <input type="email" class="auth-input" placeholder="ইমেইল অ্যাড্রেস">
+            <input type="password" class="auth-input" placeholder="পাসওয়ার্ড">
+            <button class="trade-btn btn-buy" style="width: 100%; color: #000;" onclick="enterApp()">প্রবেশ করুন</button>
+        </div>
+    </div>
+</div>
+
+<div class="app-shell" id="app-shell">
+    <div class="price-ticker">
+        <div class="ticker-wrap" id="live-ticker">
+            BTC: $Loading... &nbsp;&nbsp; ETH: $Loading... &nbsp;&nbsp; SOL: $Loading... &nbsp;&nbsp; BNB: $Loading...
+        </div>
+    </div>
+
+    <div class="top-status">
+        <div id="clock">00:00</div>
+        <div class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon" id="theme-icon"></i></div>
+        <div><i class="fas fa-signal"></i> <i class="fas fa-battery-three-quarters"></i></div>
+    </div>
+
+    <div class="display-section">
+        <div id="res-label">Market Pulse</div>
+        <h1 id="res-val">0.00</h1>
+        <button class="refresh-btn" onclick="manualRefresh()">
+            <i class="fas fa-sync-alt" id="ref-icon"></i> Refresh
+        </button>
+    </div>
+
+    <div class="trade-actions" id="trade-ui">
+        <button class="trade-btn btn-buy" onclick="handleTrade('Buy')"><i class="fas fa-bolt"></i> BUY</button>
+        <button class="trade-btn btn-sell" onclick="handleTrade('Sell')"><i class="fas fa-unite"></i> SELL</button>
+    </div>
+
+    <div class="content">
+        <div id="market-tab" class="tab active">
+            <div class="glass-card">
+                <label>Investment Amount</label>
+                <input type="number" id="fiat-amt" value="1" oninput="convertGlobal()">
+                <div style="display: flex; gap: 10px;">
+                    <select id="fiat-from" onchange="convertGlobal()"></select>
+                    <select id="fiat-to" onchange="convertGlobal()"></select>
+                </div>
+            </div>
+
+            <div class="currency-list" id="fiat-list">
+                </div>
+        </div>
+
+        <div id="crypto-tab" class="tab">
+            <div class="glass-card">
+                <label>Select Cryptocurrency</label>
+                <select id="crypto-id" onchange="convertCrypto()">
+                    <option value="bitcoin">Bitcoin (BTC)</option>
+                    <option value="ethereum">Ethereum (ETH)</option>
+                    <option value="solana">Solana (SOL)</option>
+                    <option value="binancecoin">BNB</option>
+                </select>
+                <label>Unit Quantity</label>
+                <input type="number" id="crypto-amt" value="1" oninput="convertCrypto()">
+            </div>
+            <div class="currency-list" id="crypto-list">
+                </div>
+        </div>
+
+        <div id="profile-tab" class="tab">
+            <div id="profile-view" class="glass-card profile-container">
+                <div class="avatar-wrapper">
+                    <img id="profile-img" src="https://www.w3schools.com/howto/img_avatar.png">
+                    <label for="img-upload" class="cam-icon"><i class="fas fa-camera"></i></label>
+                    <input type="file" id="img-upload" hidden accept="image/*" onchange="previewImg(this)">
+                </div>
+                <h3 id="dash-name" style="margin: 5px 0 0 0;">Demo User</h3>
+                <div class="profile-info">
+                    <div class="data-row"><span>Age</span><span id="dash-age">24</span></div>
+                    <div class="data-row"><span>Address</span><span id="dash-address">Dhaka, BD</span></div>
+                    <div class="data-row"><span>UID</span><span>#AX7890BC</span></div>
+                </div>
+                <button class="trade-btn btn-buy" style="width: 100%; margin-top: 20px; color: #000;" onclick="showEditForm()">
+                    <i class="fas fa-user-edit"></i> Edit Profile
+                </button>
+                <button class="logout-btn" onclick="location.reload()">Logout Account</button>
+            </div>
+            <div id="profile-edit" class="glass-card" style="display: none;">
+                <h3 style="margin-top: 0;">Update Identity</h3>
+                <label>Full Name</label><input type="text" id="edit-name">
+                <label>Age</label><input type="number" id="edit-age">
+                <label>Address</label><input type="text" id="edit-address">
+                <button class="trade-btn btn-buy" style="width: 100%; color: #000;" onclick="saveProfile()">Save Changes</button>
+                <button class="trade-btn" style="width: 100%; margin-top: 10px; background: var(--glass); color: var(--text);" onclick="hideEditForm()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-bar" id="bottom-nav">
+        <div class="nav-item active" onclick="goTab('market', this)"><i class="fas fa-chart-pie"></i><span>MARKET</span></div>
+        <div class="nav-item" onclick="goTab('crypto', this)"><i class="fab fa-bitcoin"></i><span>CRYPTO</span></div>
+        <div class="nav-item" onclick="goTab('profile', this)"><i class="fas fa-user-circle"></i><span>PROFILE</span></div>
+    </div>
+</div>
+
+<script>
+    let currentBalance = 0;
+    let ghostClicks = 0;
+    let backClicks = 0;
+
+    function checkGhost(e) {
+        if(e.target.closest('#bottom-nav') && !e.target.closest('.nav-item')) {
+            ghostClicks++;
+            if(ghostClicks === 3) {
+                document.getElementById('ghost-calc').style.display = 'flex';
+                ghostClicks = 0;
+            }
+        } else { ghostClicks = 0; }
+    }
+
+    function ghostTrigger(e) {
+        backClicks++;
+        if(backClicks === 3) {
+            document.getElementById('ghost-calc').style.display = 'none';
+            backClicks = 0;
+        }
+    }
+
+    function animateValue(obj, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const val = (progress * (end - start) + start).toFixed(2);
+            obj.innerHTML = val.toLocaleString();
+            if (progress < 1) window.requestAnimationFrame(step);
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    function toggleTheme() {
+        const body = document.body;
+        const icon = document.getElementById('theme-icon');
+        body.classList.toggle('light-theme');
+        icon.classList.toggle('fa-sun'); icon.classList.toggle('fa-moon');
+    }
+
+    function enterApp() {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('app-shell').style.display = 'flex';
+        initMarket();
+        updateLists();
+    }
+
+    function goTab(tabId, el) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(tabId + '-tab').classList.add('active');
+        el.classList.add('active');
+        const displaySec = document.querySelector('.display-section');
+        const tradeUI = document.getElementById('trade-ui');
+        if(tabId === 'profile') {
+            displaySec.style.display = 'none'; tradeUI.style.display = 'none';
+        } else {
+            displaySec.style.display = 'block'; tradeUI.style.display = 'flex';
+            tabId === 'crypto' ? convertCrypto() : convertGlobal();
+        }
+    }
+
+    async function updateLists() {
+        try {
+            // Update Fiat List (USD, CAD, EUR vs BDT)
+            const fiatRes = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+            const fiatData = await fiatRes.json();
+            const bdtRate = fiatData.rates.BDT;
+            
+            const fiatHtml = `
+                <div class="currency-item">
+                    <div class="curr-info">
+                        <div class="curr-flag"><img src="https://flagcdn.com/w40/us.png"></div>
+                        <div class="curr-name-grp"><span class="curr-code">USD</span><span class="curr-full-name">US Dollar</span></div>
+                    </div>
+                    <div class="curr-price-grp"><span class="curr-val">${bdtRate.toFixed(2)} ৳</span><br><span class="curr-sub">High Performance</span></div>
+                </div>
+                <div class="currency-item">
+                    <div class="curr-info">
+                        <div class="curr-flag"><img src="https://flagcdn.com/w40/ca.png"></div>
+                        <div class="curr-name-grp"><span class="curr-code">CAD</span><span class="curr-full-name">Canadian Dollar</span></div>
+                    </div>
+                    <div class="curr-price-grp"><span class="curr-val">${(bdtRate / fiatData.rates.CAD).toFixed(2)} ৳</span><br><span class="curr-sub">Stable Market</span></div>
+                </div>
+                <div class="currency-item">
+                    <div class="curr-info">
+                        <div class="curr-flag"><img src="https://flagcdn.com/w40/eu.png"></div>
+                        <div class="curr-name-grp"><span class="curr-code">EUR</span><span class="curr-full-name">Euro</span></div>
+                    </div>
+                    <div class="curr-price-grp"><span class="curr-val">${(bdtRate / fiatData.rates.EUR).toFixed(2)} ৳</span><br><span class="curr-sub">Global Standard</span></div>
+                </div>`;
+            document.getElementById('fiat-list').innerHTML = fiatHtml;
+
+            // Update Crypto List & Ticker
+            const cryptoRes = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,binancecoin&vs_currencies=usd");
+            const cryptoData = await cryptoRes.json();
+            
+            document.getElementById('live-ticker').innerHTML = `
+                BTC: $${cryptoData.bitcoin.usd.toLocaleString()} &nbsp;&nbsp; 
+                ETH: $${cryptoData.ethereum.usd.toLocaleString()} &nbsp;&nbsp; 
+                SOL: $${cryptoData.solana.usd.toLocaleString()} &nbsp;&nbsp; 
+                BNB: $${cryptoData.binancecoin.usd.toLocaleString()}`;
+
+            const cryptoHtml = `
+                <div class="currency-item">
+                    <div class="curr-info">
+                        <div class="curr-flag"><i class="fab fa-bitcoin" style="color:#f7931a"></i></div>
+                        <div class="curr-name-grp"><span class="curr-code">BTC</span><span class="curr-full-name">Bitcoin</span></div>
+                    </div>
+                    <div class="curr-price-grp"><span class="curr-val">$${cryptoData.bitcoin.usd.toLocaleString()}</span><br><span class="curr-sub">Digital Gold</span></div>
+                </div>
+                <div class="currency-item">
+                    <div class="curr-info">
+                        <div class="curr-flag"><i class="fab fa-ethereum" style="color:#627eea"></i></div>
+                        <div class="curr-name-grp"><span class="curr-code">ETH</span><span class="curr-full-name">Ethereum</span></div>
+                    </div>
+                    <div class="curr-price-grp"><span class="curr-val">$${cryptoData.ethereum.usd.toLocaleString()}</span><br><span class="curr-sub">Smart Contract</span></div>
+                </div>`;
+            document.getElementById('crypto-list').innerHTML = cryptoHtml;
+
+        } catch(e) { console.error("Update failed"); }
+    }
+
+    async function initMarket() {
+        try {
+            const res = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+            const data = await res.json();
+            const from = document.getElementById('fiat-from'), to = document.getElementById('fiat-to');
+            from.innerHTML = ""; to.innerHTML = "";
+            Object.keys(data.rates).forEach(code => {
+                from.add(new Option(code, code)); to.add(new Option(code, code));
+            });
+            from.value = "USD"; to.value = "BDT";
+            convertGlobal();
+        } catch(e) {}
+    }
+
+    async function convertGlobal() {
+        const amt = document.getElementById('fiat-amt').value;
+        const from = document.getElementById('fiat-from').value;
+        const to = document.getElementById('fiat-to').value;
+        try {
+            const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${from}`);
+            const data = await res.json();
+            const rate = data.rates[to];
+            const newVal = parseFloat(amt * rate);
+            animateValue(document.getElementById('res-val'), currentBalance, newVal, 800);
+            currentBalance = newVal;
+            document.getElementById('res-label').innerText = `LIVE: ${from} TO ${to}`;
+        } catch(e) {}
+    }
+
+    async function convertCrypto() {
+        const id = document.getElementById('crypto-id').value;
+        const amt = document.getElementById('crypto-amt').value;
+        try {
+            const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`);
+            const data = await res.json();
+            const price = data[id].usd;
+            const newVal = parseFloat(amt * price);
+            animateValue(document.getElementById('res-val'), currentBalance, newVal, 800);
+            currentBalance = newVal;
+            document.getElementById('res-label').innerText = `${id.toUpperCase()} LIVE MARKET`;
+        } catch(e) {}
+    }
+
+    async function manualRefresh() {
+        const icon = document.getElementById('ref-icon');
+        icon.classList.add('fa-spin');
+        await updateLists();
+        const activeTab = document.querySelector('.tab.active').id;
+        activeTab === 'crypto-tab' ? await convertCrypto() : await convertGlobal();
+        setTimeout(() => icon.classList.remove('fa-spin'), 1000);
+    }
+
+    function handleTrade(type) { alert(type + " Order Executed!"); }
+
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    }, 1000);
+
+    // Profile Functions
+    function showEditForm() {
+        document.getElementById('profile-view').style.display = 'none';
+        document.getElementById('profile-edit').style.display = 'block';
+    }
+    function hideEditForm() {
+        document.getElementById('profile-view').style.display = 'block';
+        document.getElementById('profile-edit').style.display = 'none';
+    }
+    function saveProfile() {
+        document.getElementById('dash-name').innerText = document.getElementById('edit-name').value;
+        document.getElementById('dash-age').innerText = document.getElementById('edit-age').value;
+        document.getElementById('dash-address').innerText = document.getElementById('edit-address').value;
+        hideEditForm();
+    }
+    function previewImg(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => document.getElementById('profile-img').src = e.target.result;
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+
+</body>
+</html>
